@@ -1,0 +1,68 @@
+---
+- name: Add 'gitea' user
+  user:
+    name: gitea
+    groups:
+      - sudo
+      - docker
+    append: yes
+    state: present
+    shell: /bin/bash
+    createhome: yes
+
+- name: Create volume directories if it does not exist
+  file:
+    path: "/home/gitea/data/{{ item }}"
+    state: directory
+    recurse: yes
+    owner: gitea
+    group: gitea
+  with_items:
+    - data
+    - db
+    - config
+
+- name: Get gitea id
+  shell: id -u gitea
+  register: gitea_id
+
+- name: Deploy stack from base compose file and override the web service
+  become: yes
+  become_user: gitea
+  docker_stack: 
+    state: present
+    name: gitea
+    compose:
+      - version: '3'
+        services:
+          gitea:
+            image: gitea/gitea:1.16.5-rootless
+            environment:
+              - USER=gitea
+              - GITEA__database__DB_TYPE=postgres
+              - GITEA__database__HOST=db:5432
+              - GITEA__database__NAME={{ gitea.database.db }}
+              - GITEA__database__USER={{ gitea.database.user }}
+              - GITEA__database__PASSWD={{ gitea.database.password }}
+            restart: always
+            user: "{{ gitea_id.stdout }}"
+            volumes:
+              - /home/gitea/data/data:/var/lib/gitea
+              - /home/gitea/data/config:/etc/gitea
+              - /etc/timezone:/etc/timezone:ro
+              - /etc/localtime:/etc/localtime:ro
+            ports:
+              - "3000:3000"
+              - "2222:2222"
+            depends_on:
+              - db
+          db:
+            image: postgres:14
+            restart: always
+            user: "{{ gitea_id.stdout }}"
+            environment:
+              - POSTGRES_USER={{ gitea.database.user }}
+              - POSTGRES_PASSWORD={{ gitea.database.password }}
+              - POSTGRES_DB={{ gitea.database.db }}
+            volumes:
+              - /home/gitea/data/db:/var/lib/postgresql/data

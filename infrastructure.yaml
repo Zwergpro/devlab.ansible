@@ -1,0 +1,14 @@
+---
+- hosts: wg
+  roles:
+    - system
+    - ufw
+    - wireguard_server
+
+- hosts: pch
+  roles:
+    - system
+    - ufw
+    - docker
+    - wireguard_client
+    - gitea

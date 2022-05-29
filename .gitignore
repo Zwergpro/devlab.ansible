@@ -1,0 +1,13 @@
+### Ansible template
+*.retry
+
+### Python
+poetry.lock
+pyproject.toml
+/group_vars/
+/hosts
+/hosts.yaml
+
+
+### IDEA
+.idea
