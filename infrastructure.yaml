@@ -12,3 +12,4 @@
     - docker
     - wireguard_client
     - gitea
+    - vaultwarden
