@@ -39,3 +39,8 @@
     state: present
     sysctl_set: yes
     reload: yes
+
+- name: enable wg on start up
+  systemd:
+    name: wg-quick@wg0
+    enabled: yes
